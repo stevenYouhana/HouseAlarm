@@ -22,14 +22,13 @@ void setup() {
   pinMode(sensors[2],INPUT);
   //alarm
   pinMode(alarm,OUTPUT);  //check if INPUT_PULLUP
+  attachInterrupt(digitalPinToInterrupt(1),policeLights,HIGH);
 }
 
 void loop(){
   switchZoneLED(getFiredSensor());
-  policeLights();
-  ringAlarm();  //USE INTERRUPTS
+  ringAlarm();
 }
-
 
 int getFiredSensor(){
   int count = 0;
@@ -53,6 +52,7 @@ void systemReset(){
       digitalWrite(i,LOW);
   }
 }
+
 void policeLights(){
   if(ringing){
     for(int i=0; i<6; i++){
@@ -69,6 +69,7 @@ void policeLights(){
     }
   }
 }
+
 void ringAlarm(){
   while(ringing){
     digitalWrite(alarm,HIGH);
