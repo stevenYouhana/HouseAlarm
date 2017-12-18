@@ -6,14 +6,18 @@ int ledRed = 5;
  */
 constexpr int zoneLEDs[] = {6,7,8};
 constexpr int sensors[] = {9,10,11};  //INPUTS
-const int alarm = 2;  //interrupt?
-const int ALARM_DURATION = 3000; //ALTER TIME
+unsigned long runTime;
+unsigned long instantTime = 0;
+//police lights
+int flashSpeed = 50;
+const int alarm = 2;
+const int ALARM_DURATION = 5000; //ALTER TIME
 boolean ringing = false;
-const int flashSpeed = 50; //POLICE LIGHTS
+long policeSteps = 0;
+long swapLights = 0; 
 
 void setup(){
   Serial.begin(9600);
-  pinMode(3,INPUT);
   //police lights
   pinMode(ledBlue,OUTPUT);
   pinMode(ledRed,OUTPUT);
@@ -28,16 +32,55 @@ void setup(){
   //alarm
   pinMode(alarm,OUTPUT);  //check if INPUT_PULLUP
   Serial.println("Start...");
-  attachInterrupt(digitalPinToInterrupt(3),policeLights,HIGH);
 }
 
 void loop(){
+  testTimer();
   //testLEDs();
   //testButtons();
-  switchZoneLED(getFiredSensor());
-  ringAlarm();
-
-  delay(10);
+  //switchZoneLED(getFiredSensor());
+  //ringAlarm();
+  
+  //delay(10);
+}
+void testTimer(){
+  runTime = millis();
+  const double OFF_TIME = 70;
+  const double swapLightsEvery = 500;
+  boolean policeRed = false;
+  ringing = true;
+  
+  if(ringing && (instantTime <= ALARM_DURATION)){
+    if(policeRed){
+      digitalWrite(ledBlue,LOW);
+      if(digitalRead(ledRed) == LOW && (runTime-policeSteps) >= OFF_TIME){
+      digitalWrite(ledRed,HIGH);
+        policeSteps = runTime;
+        Serial.println("if");
+      }
+      else if(digitalRead(ledRed) == HIGH && (runTime - policeSteps) >= OFF_TIME){
+        digitalWrite(ledRed,LOW);
+        policeSteps = runTime;
+        Serial.println("else if");
+      }
+      instantTime = runTime;
+      policeRed = true;
+    }
+    else{
+      digitalWrite(ledRed,LOW);
+      if(digitalRead(ledBlue) == LOW && (runTime-policeSteps) >= OFF_TIME){
+        digitalWrite(ledBlue,HIGH);
+        policeSteps = runTime;
+        Serial.println("if");
+      }
+      else if(digitalRead(ledBlue) == HIGH && (runTime - policeSteps) >= OFF_TIME){
+        digitalWrite(ledBlue,LOW);
+        policeSteps = runTime;
+        Serial.println("else if");
+      }
+      instantTime = runTime;
+    }
+  }
 }
 void testButtons(){
   if(digitalRead(9) == HIGH){
@@ -92,7 +135,6 @@ void switchZoneLED(int led){
 void systemReset(){
   Serial.println("ACCESS RES");
   ringing = false;
-  digitalWrite(3,LOW);
   digitalWrite(alarm,LOW);
   //reset OUTPUT pins
   for(int i=4; i<9; i++){
@@ -104,24 +146,25 @@ void policeLights(){
   if(ringing){
     for(int i=0; i<6; i++){
       digitalWrite(ledRed,HIGH);
-      //delay(flashSpeed);
+      delay(flashSpeed);
       digitalWrite(ledRed,LOW);
-      //delay(flashSpeed);
+      delay(flashSpeed);
     }
     for(int i=0; i<6; i++){
       digitalWrite(ledBlue,HIGH);
-      //delay(flashSpeed);
+      delay(flashSpeed);
       digitalWrite(ledBlue,LOW);
-      //delay(flashSpeed);
+      delay(flashSpeed);
     }
   }
 }
 
 void ringAlarm(){
-  digitalWrite(3,HIGH);
   if(ringing){
     digitalWrite(alarm,HIGH);
+    policeLights();
   }
+  
   delay(ALARM_DURATION);
   systemReset();  //********RESETING SYSTEM*********
 }
