@@ -6,15 +6,13 @@ int ledRed = 5;
  */
 constexpr int zoneLEDs[] = {6,7,8};
 constexpr int sensors[] = {9,10,11};  //INPUTS
-unsigned long runTime;
-unsigned long instantTime = 0;
+unsigned long margin = 0;
 //police lights
 int flashSpeed = 50;
 const int alarm = 2;
-const int ALARM_DURATION = 5000; //ALTER TIME
 boolean ringing = false;
-long policeSteps = 0;
-long swapLights = 0; 
+const long ALARM_DURATION = 5000; //ALTER TIME
+boolean trip = false; //used to set the final time recorded for margin as a reference point
 
 void setup(){
   Serial.begin(9600);
@@ -30,89 +28,42 @@ void setup(){
   pinMode(sensors[1],INPUT);
   pinMode(sensors[2],INPUT);
   //alarm
-  pinMode(alarm,OUTPUT);  //check if INPUT_PULLUP
+  pinMode(alarm,OUTPUT);
+  margin = 0;
   Serial.println("Start...");
 }
 
 void loop(){
-  testTimer();
   //testLEDs();
   //testButtons();
-  //switchZoneLED(getFiredSensor());
-  //ringAlarm();
-  
+  testTimer();
   //delay(10);
 }
 void testTimer(){
-  runTime = millis();
-  const double OFF_TIME = 70;
-  const double swapLightsEvery = 500;
-  boolean policeRed = false;
-  ringing = true;
-  
-  if(ringing && (instantTime <= ALARM_DURATION)){
-    if(policeRed){
-      digitalWrite(ledBlue,LOW);
-      if(digitalRead(ledRed) == LOW && (runTime-policeSteps) >= OFF_TIME){
-      digitalWrite(ledRed,HIGH);
-        policeSteps = runTime;
-        Serial.println("if");
-      }
-      else if(digitalRead(ledRed) == HIGH && (runTime - policeSteps) >= OFF_TIME){
-        digitalWrite(ledRed,LOW);
-        policeSteps = runTime;
-        Serial.println("else if");
-      }
-      instantTime = runTime;
-      policeRed = true;
-    }
-    else{
-      digitalWrite(ledRed,LOW);
-      if(digitalRead(ledBlue) == LOW && (runTime-policeSteps) >= OFF_TIME){
-        digitalWrite(ledBlue,HIGH);
-        policeSteps = runTime;
-        Serial.println("if");
-      }
-      else if(digitalRead(ledBlue) == HIGH && (runTime - policeSteps) >= OFF_TIME){
-        digitalWrite(ledBlue,LOW);
-        policeSteps = runTime;
-        Serial.println("else if");
-      }
-      instantTime = runTime;
-    }
+  unsigned long runTime = millis();
+  switchZoneLED(getFiredSensor());
+  setMargin();
+  if((ringing) & (margin <= runTime)){
+    Serial.println("margin reached");
+    systemReset();
   }
-}
-void testButtons(){
-  if(digitalRead(9) == HIGH){
-    Serial.println("ON 9");
-  }
-  if(digitalRead(10) == HIGH){
-    Serial.println("ON 10");
-  }
-  if(digitalRead(11) == HIGH){
-    Serial.println("ON 11");
-  }
-  
   else{
-    Serial.println("OFF");
+    ringAlarm();
   }
 }
-void testLEDs(){
-  for(int i=2; i<9; i++){
-    digitalWrite(i,HIGH);
-    Serial.println(i);
-    delay(200);
-    digitalWrite(i,LOW);
-    delay(200);
+void setMargin(){
+  if(!(ringing)){
+    margin = millis() + ALARM_DURATION;
   }
 }
+
 int getFiredSensor(){
-  Serial.println("gettingFired");
-  while(!(ringing)){
-    Serial.println("pass IF");
+  if(!(ringing)){
+    Serial.println("gettingFired");
     for(int i=0; i<3; i++){
       if(digitalRead(sensors[i]) == HIGH){
         ringing = true; //RINGING TRUE
+        trip = true;
         Serial.println("SENSOR OFF");
         return sensors[i];
       }
@@ -120,25 +71,16 @@ int getFiredSensor(){
   }
 }
 
-
 void switchZoneLED(int led){
-  switch(led){
-    case sensors[0]: digitalWrite(zoneLEDs[0],HIGH);
-    break;
-    case sensors[1]: digitalWrite(zoneLEDs[1],HIGH);
-    break;
-    case sensors[2]: digitalWrite(zoneLEDs[2],HIGH); 
-    break;
-  }
-}
-
-void systemReset(){
-  Serial.println("ACCESS RES");
-  ringing = false;
-  digitalWrite(alarm,LOW);
-  //reset OUTPUT pins
-  for(int i=4; i<9; i++){
-      digitalWrite(i,LOW);
+  if((ringing)){
+    switch(led){
+      case sensors[0]: digitalWrite(zoneLEDs[0],HIGH);
+      break;
+      case sensors[1]: digitalWrite(zoneLEDs[1],HIGH);
+      break;
+      case sensors[2]: digitalWrite(zoneLEDs[2],HIGH); 
+      break;
+    }
   }
 }
 
@@ -164,8 +106,58 @@ void ringAlarm(){
     digitalWrite(alarm,HIGH);
     policeLights();
   }
-  
-  delay(ALARM_DURATION);
-  systemReset();  //********RESETING SYSTEM*********
 }
 
+void systemReset(){
+  Serial.println("ACCESS RES");
+  ringing = false;
+  margin = 0;
+  trip = false;
+  digitalWrite(alarm,LOW);
+  //reset OUTPUT pins
+  for(int i=4; i<9; i++){
+      digitalWrite(i,LOW);
+  }
+  Serial.println("SYSTEM RESETING...");
+  delay(2000);
+  systemRestart();
+}
+void systemRestart(){
+  for(int i=0; i<4; i++){
+    digitalWrite(6,HIGH);
+    digitalWrite(7,HIGH);
+    digitalWrite(8,HIGH);
+    delay(200);
+    digitalWrite(6,LOW);
+    digitalWrite(7,LOW);
+    digitalWrite(8,LOW);
+    delay(200);
+  }
+}
+
+//************************TESTS************************
+
+void testButtons(){
+  if(digitalRead(9) == HIGH){
+    Serial.println("ON 9");
+  }
+  if(digitalRead(10) == HIGH){
+    Serial.println("ON 10");
+  }
+  if(digitalRead(11) == HIGH){
+    Serial.println("ON 11");
+  }
+  
+  else{
+    Serial.println("OFF");
+  }
+}
+void testLEDs(){
+  for(int i=2; i<9; i++){
+    digitalWrite(i,HIGH);
+    Serial.println(i);
+    delay(200);
+    digitalWrite(i,LOW);
+    delay(200);
+  }
+}
