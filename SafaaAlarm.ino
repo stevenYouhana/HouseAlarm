@@ -42,7 +42,7 @@ void loop(){
 void mainOperation(){
   unsigned long runTime = millis();
   switchZoneLED(getFiredSensor());
-  setMargin();
+  setMargin(margin, ALARM_DURATION);
   if((ringing) & (margin <= runTime)){
     Serial.println("margin reached");
     systemReset();
@@ -51,15 +51,15 @@ void mainOperation(){
     ringAlarm();
   }
 }
-void setMargin(){
+void setMargin(unsigned long limit, int duration){
   if(!(ringing)){
-    margin = millis() + ALARM_DURATION;
+    limit = millis() + duration;
   }
 }
 
 int getFiredSensor(){
   if(!(ringing)){
-    Serial.println("standing by...");
+    //Serial.println("standing by...");
     for(int i=0; i<3; i++){
       if(digitalRead(sensors[i]) == HIGH){
         ringing = true; //RINGING TRUE
@@ -100,11 +100,28 @@ void policeLights(){
     }
   }
 }
+void popo(){
+  Serial.println("RINGING");
+  int switchTime = 100;
+  unsigned long switchState = 0;
+  setMargin(switchState,switchTime);
+  //unsigned long runTime = millis();
+  
+    if((digitalRead(ledRed)==LOW)){
+      digitalWrite(ledRed,HIGH);
+    }
+//    else{
+//      digitalWrite(ledRed,LOW);
+//    }
+  
+}
 
 void ringAlarm(){
   if(ringing){
     digitalWrite(alarm,HIGH);
-    policeLights();
+    policeLights();     
+    //                                TRYING NEW METHOD!
+    //popo();
   }
 }
 
