@@ -7,6 +7,11 @@ int ledRed = 5;
 constexpr int zoneLEDs[] = {6,7,8};
 constexpr int sensors[] = {9,10,11};  //INPUTS
 unsigned long margin = 0;
+//POLICE LIGHTS TIMER VARIABLES
+int policeShift = 50;
+unsigned long previousePoliceShift = 0;
+boolean policeState = false;
+int policeCountFlip = 0;
 //police lights
 int flashSpeed = 50;
 const int alarm = 2;
@@ -42,7 +47,7 @@ void loop(){
 void mainOperation(){
   unsigned long runTime = millis();
   switchZoneLED(getFiredSensor());
-  setMargin(margin, ALARM_DURATION);
+  setMargin();
   if((ringing) & (margin <= runTime)){
     Serial.println("margin reached");
     systemReset();
@@ -51,15 +56,15 @@ void mainOperation(){
     ringAlarm();
   }
 }
-void setMargin(unsigned long limit, int duration){
+void setMargin(){
   if(!(ringing)){
-    limit = millis() + duration;
+    margin = millis() + ALARM_DURATION;
   }
 }
 
 int getFiredSensor(){
   if(!(ringing)){
-    //Serial.println("standing by...");
+    Serial.println("standing by...");
     for(int i=0; i<3; i++){
       if(digitalRead(sensors[i]) == HIGH){
         ringing = true; //RINGING TRUE
@@ -101,27 +106,42 @@ void policeLights(){
   }
 }
 void popo(){
-  Serial.println("RINGING");
-  int switchTime = 100;
-  unsigned long switchState = 0;
-  setMargin(switchState,switchTime);
-  //unsigned long runTime = millis();
-  
-    if((digitalRead(ledRed)==LOW)){
-      digitalWrite(ledRed,HIGH);
+  /*
+   * unsigned long policeShift = 50;
+   * unsigned long previousePoliceShift = 0;
+   * boolean policeState = false;
+   * int policeCountFlip = 0;
+   */
+  unsigned long runTime = millis();
+  if(policeCountFlip == 24){
+    policeCountFlip = 0;
+  }
+  if(policeCountFlip <= 12){
+    digitalWrite(ledBlue,LOW);
+    digitalWrite(ledRed, policeState);
+    if((runTime - previousePoliceShift) >= policeShift){
+      policeState = !policeState;
+      digitalWrite(ledRed, policeState);
+      policeCountFlip++;
+      previousePoliceShift = millis();
     }
-//    else{
-//      digitalWrite(ledRed,LOW);
-//    }
-  
+  }
+  else{
+    digitalWrite(ledBlue, policeState);
+    //!policeCountFlip;
+    if((runTime - previousePoliceShift) >= policeShift){
+      policeState = !policeState;
+      digitalWrite(ledBlue, policeState);
+      policeCountFlip++;
+      previousePoliceShift = millis();
+    }
+  }
 }
-
 void ringAlarm(){
   if(ringing){
     digitalWrite(alarm,HIGH);
-    policeLights();     
-    //                                TRYING NEW METHOD!
-    //popo();
+    //policeLights();
+    popo();
   }
 }
 
