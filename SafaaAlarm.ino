@@ -8,7 +8,7 @@ constexpr int zoneLEDs[] = {6,7,8};
 constexpr int sensors[] = {9,10,11};  //INPUTS
 unsigned long margin = 0;
 //POLICE LIGHTS TIMER VARIABLES
-int policeShift = 50;
+int policeShift = 40;
 unsigned long previousePoliceShift = 0;
 boolean policeState = false;
 int policeCountFlip = 0;
@@ -17,7 +17,7 @@ int flashSpeed = 50;
 const int alarm = 2;
 boolean onZones[] = {false,false,false};
 boolean ringing = false;
-const long ALARM_DURATION = 5000; //ALTER TIME
+const long ALARM_DURATION = 60000; //ALTER TIME
 boolean trip = false; //used to set the final time recorded for margin as a reference point
 
 void setup(){
@@ -96,26 +96,28 @@ void popo(){
    * int policeCountFlip = 0;
    */
   unsigned long runTime = millis();
-  if(policeCountFlip == 24){
+  if(policeCountFlip == 18){
     policeCountFlip = 0;
   }
-  if(policeCountFlip <= 12){
-    digitalWrite(ledBlue,LOW);
+  if(policeCountFlip <= 6){
     digitalWrite(ledRed, policeState);
     if((runTime - previousePoliceShift) >= policeShift){
+      digitalWrite(ledBlue,HIGH); //overlap
       policeState = !policeState;
       digitalWrite(ledRed, policeState);
       policeCountFlip++;
       previousePoliceShift = millis();
+      digitalWrite(ledBlue,LOW);
     }
   }
   else{
-    digitalWrite(ledRed,LOW);
     if((runTime - previousePoliceShift) >= policeShift){
+      digitalWrite(ledRed,HIGH);  //overlap
       policeState = !policeState;
       digitalWrite(ledBlue, policeState);
       policeCountFlip++;
       previousePoliceShift = millis();
+      digitalWrite(ledRed,LOW);
     }
   }
 }
