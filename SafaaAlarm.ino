@@ -42,7 +42,6 @@ void loop(){
   //testLEDs();
   //testButtons();
   mainOperation();
-  DEVELOPMENT_RESET();
 }
 void mainOperation(){
   unsigned long runTime = millis();
@@ -89,22 +88,6 @@ void switchZoneLED(int led){
   }
 }
 
-void policeLights(){
-  if(ringing){
-    for(int i=0; i<6; i++){
-      digitalWrite(ledRed,HIGH);
-      delay(flashSpeed);
-      digitalWrite(ledRed,LOW);
-      delay(flashSpeed);
-    }
-    for(int i=0; i<6; i++){
-      digitalWrite(ledBlue,HIGH);
-      delay(flashSpeed);
-      digitalWrite(ledBlue,LOW);
-      delay(flashSpeed);
-    }
-  }
-}
 void popo(){
   /*
    * unsigned long policeShift = 50;
@@ -127,8 +110,7 @@ void popo(){
     }
   }
   else{
-    digitalWrite(ledBlue, policeState);
-    //!policeCountFlip;
+    digitalWrite(ledRed,LOW);
     if((runTime - previousePoliceShift) >= policeShift){
       policeState = !policeState;
       digitalWrite(ledBlue, policeState);
