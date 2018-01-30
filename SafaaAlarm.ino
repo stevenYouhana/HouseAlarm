@@ -1,5 +1,10 @@
-int ledBlue = 4;
-int ledRed = 5;
+const int ledBlue = 4;
+const int ledRed = 5;
+//led to keep flashing if alarm is gone off
+const int goneOff = 3;
+int goneOffprev = 0;
+int goneOffFlashing = 500;
+int goneOffState = LOW;
 /*
  * A constant expression is an expression with a value that is determined during compilation.
  * That value can be evaluated at runtime, but cannot be changed.
@@ -25,6 +30,7 @@ void setup(){
   //police lights
   pinMode(ledBlue,OUTPUT);
   pinMode(ledRed,OUTPUT);
+  pinMode(goneOff,OUTPUT);
   //zone leds
   pinMode(zoneLEDs[0],OUTPUT);
   pinMode(zoneLEDs[1],OUTPUT);
@@ -47,13 +53,14 @@ void mainOperation(){
   unsigned long runTime = millis();
   switchZoneLED(getFiredSensor());
   setMargin();
-  if((ringing) & (margin <= runTime)){
+  if((ringing) && (margin <= runTime)){
     Serial.println("margin reached");
     systemReset();
   }
   else{
     ringAlarm();
   }
+  goneOffLed();
 }
 void setMargin(){
   if(!(ringing)){
@@ -128,7 +135,20 @@ void ringAlarm(){
     popo();
   }
 }
-
+void goneOffLed(){
+  unsigned long runTime = millis();
+  if(onZones[0] || onZones[1] || onZones[2]){
+    if((runTime - goneOffprev) >= goneOffFlashing){
+      if(goneOffState == LOW){
+        digitalWrite(goneOff,HIGH); 
+      }
+      else{
+        digitalWrite(goneOff,LOW);
+      }
+      goneOffprev = millis();
+    }
+  }
+}
 void systemReset(){
   Serial.println("ACCESS RES");
   ringing = false;
@@ -157,7 +177,7 @@ void systemRestart(){
   for(int on=0; on<3; on++){
     Serial.print(onZones[on]);
     if(onZones[on]){
-      digitalWrite(on+zoneLEDs[0],HIGH);
+      digitalWrite(zoneLEDs[0],HIGH);
     }
   }
 }
