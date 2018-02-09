@@ -22,7 +22,7 @@ int flashSpeed = 50;
 const int alarm = 2;
 boolean onZones[] = {false,false,false};
 boolean ringing = false;
-const long ALARM_DURATION = 60000; //ALTER TIME
+const long ALARM_DURATION = 5000; //ALTER TIME
 boolean trip = false; //used to set the final time recorded for margin as a reference point
 
 void setup(){
@@ -60,7 +60,7 @@ void mainOperation(){
   else{
     ringAlarm();
   }
-  goneOffLed();
+  //goneOffLed();
 }
 void setMargin(){
   if(!(ringing)){
