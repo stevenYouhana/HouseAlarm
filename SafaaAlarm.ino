@@ -14,6 +14,7 @@ int resetButton = 12;
 constexpr int zoneLEDs[] = {6,7,8};
 constexpr int sensors[] = {9,10,11};  //INPUTS
 unsigned long margin = 0;
+unsigned long runTime;  //run time of the board for 49/50 days
 //POLICE LIGHTS TIMER VARIABLES
 int policeShift = 40;
 unsigned long previousePoliceShift = 0;
@@ -29,6 +30,7 @@ boolean trip = false; //used to set the final time recorded for margin as a refe
 
 void setup(){
   Serial.begin(9600);
+  runTime = millis();
   //police lights
   pinMode(ledBlue,OUTPUT);
   pinMode(ledRed,OUTPUT);
@@ -41,6 +43,7 @@ void setup(){
   pinMode(sensors[0],INPUT);
   pinMode(sensors[1],INPUT);
   pinMode(sensors[2],INPUT);
+  pinMode(resetButton,INPUT);
   //alarm
   pinMode(alarm,OUTPUT);
   Serial.println("Start...");
@@ -52,7 +55,6 @@ void loop(){
   mainOperation();
 }
 void mainOperation(){
-  unsigned long runTime = millis();
   switchZoneLED(getFiredSensor());
   setMargin();
   if((ringing) && (margin <= runTime)){
@@ -63,10 +65,11 @@ void mainOperation(){
     ringAlarm();
   }
   goneOffLed();
+  hardReset();
 }
 void setMargin(){
   if(!(ringing)){
-    margin = millis() + ALARM_DURATION;
+    margin = runTime + ALARM_DURATION;
   }
 }
 
@@ -97,14 +100,13 @@ void switchZoneLED(int led){
   }
 }
 
-void popo(){
+void policeLights(){
   /*
    * unsigned long policeShift = 50;
    * unsigned long previousePoliceShift = 0;
    * boolean policeState = false;
    * int policeCountFlip = 0;
    */
-  unsigned long runTime = millis();
   if(policeCountFlip == 18){
     policeCountFlip = 0;
   }
@@ -133,30 +135,33 @@ void popo(){
 void ringAlarm(){
   if(ringing){
     digitalWrite(alarm,HIGH);
-    //policeLights();
-    popo();
+    policeLights();
   }
 }
 void goneOffLed(){
-  unsigned long runTime = millis();
   if(onZones[0] || onZones[1] || onZones[2]){
     if((runTime - goneOffprev) >= 500){
       goneOffState = !goneOffState;
       digitalWrite(goneOff, goneOffState);
       goneOffprev = runTime;
     }
+  } 
+  else{
+    digitalWrite(goneOff,LOW);
   }
 }
 void hardReset(){
-  long resetTime = 3000;
-  unsigned runTime = millis();
-  while(resetButton == HIGH){
-    if((runTime - resetTime) >= resetTime){
+  long resetTime = 0;
+  while(digitalRead(resetButton) == HIGH){
+    Serial.println("RESET HIGH:  ");
+    if((runTime - resetTime) >= 3000){
+      Serial.print(runTime - resetTime);
       systemReset();
     }
     resetTime = runTime;
   }
 }
+
 void systemReset(){
   Serial.println("ACCESS RES");
   ringing = false;
@@ -185,17 +190,10 @@ void systemRestart(){
   for(int on=0; on<3; on++){
     Serial.print(onZones[on]);
     if(onZones[on]){
-      digitalWrite(on+zoneLEDs[0],HIGH);
+      digitalWrite(on+zoneLEDs[on],LOW); //CORRECTED? ****************
     }
   }
-}
-
-void DEVELOPMENT_RESET(){
-  if(sensors[0]==HIGH & sensors[1]==HIGH & sensors[2]==HIGH){
-    digitalWrite(zoneLEDs[0],LOW);
-    digitalWrite(zoneLEDs[1],LOW);
-    digitalWrite(zoneLEDs[2],LOW);
-  }
+  delay(5000);
 }
 
 //************************TESTS************************
