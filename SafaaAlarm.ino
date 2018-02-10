@@ -2,9 +2,11 @@ const int ledBlue = 4;
 const int ledRed = 5;
 //led to keep flashing if alarm is gone off
 const int goneOff = 3;
-int goneOffprev = 0;
+unsigned long goneOffprev = 0;
 int goneOffFlashing = 500;
 int goneOffState = LOW;
+int resetButton = 12;
+
 /*
  * A constant expression is an expression with a value that is determined during compilation.
  * That value can be evaluated at runtime, but cannot be changed.
@@ -60,7 +62,7 @@ void mainOperation(){
   else{
     ringAlarm();
   }
-  //goneOffLed();
+  goneOffLed();
 }
 void setMargin(){
   if(!(ringing)){
@@ -138,15 +140,21 @@ void ringAlarm(){
 void goneOffLed(){
   unsigned long runTime = millis();
   if(onZones[0] || onZones[1] || onZones[2]){
-    if((runTime - goneOffprev) >= goneOffFlashing){
-      if(goneOffState == LOW){
-        digitalWrite(goneOff,HIGH); 
-      }
-      else{
-        digitalWrite(goneOff,LOW);
-      }
-      goneOffprev = millis();
+    if((runTime - goneOffprev) >= 500){
+      goneOffState = !goneOffState;
+      digitalWrite(goneOff, goneOffState);
+      goneOffprev = runTime;
     }
+  }
+}
+void hardReset(){
+  long resetTime = 3000;
+  unsigned runTime = millis();
+  while(resetButton == HIGH){
+    if((runTime - resetTime) >= resetTime){
+      systemReset();
+    }
+    resetTime = runTime;
   }
 }
 void systemReset(){
@@ -177,7 +185,7 @@ void systemRestart(){
   for(int on=0; on<3; on++){
     Serial.print(onZones[on]);
     if(onZones[on]){
-      digitalWrite(zoneLEDs[0],HIGH);
+      digitalWrite(on+zoneLEDs[0],HIGH);
     }
   }
 }
