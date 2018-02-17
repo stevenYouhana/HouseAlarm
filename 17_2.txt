@@ -41,7 +41,6 @@ void setup(){
   pinMode(sensors[0],INPUT);
   pinMode(sensors[1],INPUT);
   pinMode(sensors[2],INPUT);
-  pinMode(resetButton,INPUT);
   //alarm
   pinMode(alarm,OUTPUT);
   Serial.println("Start...");
@@ -64,7 +63,6 @@ void mainOperation(){
     ringAlarm();
   }
   goneOffLed();
-  hardReset();
 }
 void setMargin(){
   if(!(ringing)){
@@ -149,19 +147,14 @@ void goneOffLed(){
     }
   }
 }
-void hardReset(){ //NOT WORKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  const int resetTime = 3000;
-  unsigned long holder = 0;
-  while(digitalRead(resetButton) == HIGH){
-    unsigned runTime = millis();
-    if(runTime - holder >= resetTime){
-      systemHardReset();
-      Serial.println("RESET!");
+void hardReset(){
+  long resetTime = 3000;
+  unsigned runTime = millis();
+  while(resetButton == HIGH){
+    if((runTime - resetTime) >= resetTime){
+      systemReset();
     }
-    else{
-      Serial.println("ELSE!");
-    }
-    holder = runTime; 
+    resetTime = runTime;
   }
 }
 void systemReset(){
@@ -176,15 +169,7 @@ void systemReset(){
   digitalWrite(ledBlue,LOW);
   Serial.println("SYSTEM RESETING...");
   delay(2000);
-  systemRestart();
-}
-void systemHardReset(){
-  onZones[0] = false;
-  onZones[1] = false;
-  onZones[2] = false;
-  for(int i=0; i<12; i++){
-    digitalWrite(i,LOW);
-  }
+  systemRestart();  //NOTIFYER
 }
 void systemRestart(){
    for(int i=0; i<4; i++){
