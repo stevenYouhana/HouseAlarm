@@ -1,7 +1,7 @@
-const int ledBlue = 4;
-const int ledRed = 5;
+const byte ledBlue = 4;
+const byte ledRed = 5;
 //led to keep flashing if alarm is gone off
-const int goneOff = 3;
+const byte goneOff = 3;
 unsigned long goneOffprev = 0;
 int goneOffFlashing = 500;
 int goneOffState = LOW;
@@ -11,8 +11,8 @@ int resetButton = 12;
  * A constant expression is an expression with a value that is determined during compilation.
  * That value can be evaluated at runtime, but cannot be changed.
  */
-constexpr int zoneLEDs[] = {6,7,8};
-constexpr int sensors[] = {9,10,11};  //INPUTS
+constexpr byte zoneLEDs[] = {6,7,8};
+constexpr byte sensors[] = {9,10,11};  //INPUTS
 unsigned long margin = 0;
 //POLICE LIGHTS TIMER VARIABLES
 int policeShift = 40;
@@ -24,9 +24,9 @@ int flashSpeed = 50;
 const int alarm = 2;
 boolean onZones[] = {false,false,false};
 boolean ringing = false;
-const long ALARM_DURATION = 5000; //ALTER TIME
+const long ALARM_DURATION = 60000; //ALTER TIME
 boolean trip = false; //used to set the final time recorded for margin as a reference point
-const long resetTime = 3000; //hard reset time og the system
+const long resetTime = 3000; //hard reset time of the system
   
 void setup(){
   Serial.begin(9600);
