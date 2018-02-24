@@ -150,6 +150,8 @@ void goneOffLed(){
 void hardReset(){
   unsigned long holder = 0;
   while(digitalRead(resetButton) == HIGH){
+    //if ringing, keep ringing within the 3 button HIGH duration
+    ringAlarm();
     if((millis()-holder) >= resetTime){
       if((millis()-holder) == resetTime){
         systemHardReset();
@@ -179,6 +181,9 @@ void systemHardReset(){
   for(int i=0; i<12; i++){
     digitalWrite(i,LOW);
   }
+  ringing = false;
+  margin = 0;
+  trip = false;
   for(int c=0; c<3; c++){
     for(int i=0; i<3; i++){
       digitalWrite(zoneLEDs[i],HIGH);
